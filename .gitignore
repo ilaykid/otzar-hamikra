@@ -1,0 +1,6 @@
+data_cache/
+tanakh.db
+tanakh.db.tmp
+tanakh_concordance.csv
+__pycache__/
+*.pyc

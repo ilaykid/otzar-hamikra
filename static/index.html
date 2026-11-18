@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>אוצר המקרא — קונקורדנציה, שורשים ומפת קשרים</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body data-theme="light">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-emblem" aria-hidden="true">א</div>
+        <div class="brand-text">
+          <h1>אוצר המקרא</h1>
+          <span id="corpusStats" class="brand-sub">טוען נתוני תנ"ך...</span>
+        </div>
+      </div>
+
+      <div class="search-cluster">
+        <div class="mode-tabs" role="tablist">
+          <button id="modeWordsBtn" class="mode-tab active" data-mode="words" role="tab" aria-selected="true">
+            מילים ושורשים
+          </button>
+          <button id="modeVersesBtn" class="mode-tab" data-mode="verses" role="tab" aria-selected="false">
+            חיפוש חופשי בפסוקים
+          </button>
+        </div>
+        <div class="search-box">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-3.5-3.5"></path>
+          </svg>
+          <input
+            id="searchInput"
+            type="search"
+            autocomplete="off"
+            placeholder="חפש מילה (עם או בלי ניקוד), שורש (ה.ל.כ / הלך)..."
+          />
+          <button id="clearSearchBtn" class="clear-btn hidden" title="נקה חיפוש">✕</button>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <button id="cantillationToggle" class="toggle-pill" aria-pressed="false" title="הצג או הסתר טעמי מקרא בפסוקים">
+          <span class="dot"></span>
+          <span>טעמי המקרא</span>
+        </button>
+        <button id="themeToggle" class="toggle-pill icon-pill" title="החלף ערכת צבעים">
+          <span id="themeIcon">🌙</span>
+          <span id="themeLabel">מצב לילה</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="filter-strip">
+      <div class="spotlights-row">
+        <span class="strip-label">מוקדי מחקר:</span>
+        <button class="spot-chip" data-spot="root:ה.ל.כ">שורש ה.ל.כ</button>
+        <button class="spot-chip" data-spot="root:ב.ר.א">שורש ב.ר.א</button>
+        <button class="spot-chip" data-spot="root:א.ה.ב">שורש א.ה.ב</button>
+        <button class="spot-chip" data-spot="root:א.ו.ר">שורש א.ו.ר</button>
+        <button class="spot-chip" data-spot="entry:banu">הומוגרף בָּנוּ</button>
+        <button class="spot-chip" data-spot="entry:kol">כָּל מול כֹּל</button>
+        <button class="spot-chip" data-spot="rare">מילים יחידאיות</button>
+      </div>
+
+      <div class="controls-row">
+        <div id="binyanFilterGroup" class="binyan-pills" aria-label="סינון לפי בניין">
+          <button class="binyan-pill active" data-binyan="all">הכל</button>
+          <button class="binyan-pill" data-binyan="paal">פָּעַל</button>
+          <button class="binyan-pill" data-binyan="nifal">נִפְעַל</button>
+          <button class="binyan-pill" data-binyan="piel">פִּעֵל</button>
+          <button class="binyan-pill" data-binyan="pual">פֻּעַל</button>
+          <button class="binyan-pill" data-binyan="hifil">הִפְעִיל</button>
+          <button class="binyan-pill" data-binyan="hufal">הֻפְעַל</button>
+          <button class="binyan-pill" data-binyan="hitpael">הִתְפַּעֵל</button>
+          <button class="binyan-pill" data-binyan="none">שמות / ללא בניין</button>
+          <button class="binyan-pill" data-binyan="aramaic">ארמית</button>
+        </div>
+
+        <div class="select-group">
+          <select id="bookFilter" aria-label="סינון לפי חלק או ספר">
+            <option value="all">כל התנ"ך (39 ספרים)</option>
+            <option value="div:תורה">תורה</option>
+            <option value="div:נביאים">נביאים</option>
+            <option value="div:כתובים">כתובים</option>
+          </select>
+          <select id="sortFilter" aria-label="מיון תוצאות">
+            <option value="freq">מיון: נפוץ ביותר</option>
+            <option value="alpha">מיון: סדר אלף-בית</option>
+            <option value="rare">מיון: נדירות / יחידאיות</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <!-- Right Master List (Word & Root Results) -->
+    <aside id="masterPane" class="master-pane">
+      <div id="matchedRootsBox" class="matched-roots hidden"></div>
+      <div class="master-header">
+        <span id="resultsCountLabel">טוען מילים...</span>
+      </div>
+      <div id="resultsList" class="results-list"></div>
+      <div id="resultsMoreWrap" class="load-more-wrap hidden">
+        <button id="loadMoreEntriesBtn" class="secondary-btn">טען תוצאות נוספות</button>
+      </div>
+    </aside>
+
+    <!-- Main Analytical & Verse Workspace -->
+    <section class="detail-pane">
+      <!-- Explorer Mode -->
+      <div id="explorerView">
+        <article id="heroCard" class="card hero-card">
+          <div class="hero-top">
+            <div class="hero-identity">
+              <div id="heroKindBadge" class="hero-kind">מילה מנוקדת</div>
+              <h2 id="heroTitle" class="he-serif hero-word">—</h2>
+              <div id="heroBadges" class="hero-badges"></div>
+            </div>
+            <div class="hero-metrics">
+              <div class="metric-box">
+                <span class="metric-val" id="metricOcc">0</span>
+                <span class="metric-lbl">מופעים בתנ"ך</span>
+              </div>
+              <div class="metric-box">
+                <span class="metric-val" id="metricVerses">0</span>
+                <span class="metric-lbl">פסוקים</span>
+              </div>
+              <div class="metric-box">
+                <span class="metric-val" id="metricForms">—</span>
+                <span class="metric-lbl" id="metricFormsLbl">דירוג שכיחות</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="homographStrip" class="relation-strip hidden"></div>
+          <div id="niqqudTwinsStrip" class="relation-strip hidden"></div>
+        </article>
+
+        <!-- Interactive Visualization Card -->
+        <article id="vizCard" class="card viz-card">
+          <div class="viz-header">
+            <div class="viz-tabs" role="tablist">
+              <button class="viz-tab active" data-viz="constellation">מפת קשרי שורש ובניינים</button>
+              <button class="viz-tab" data-viz="collocations">רשת מילים נלוות בפסוק</button>
+              <button class="viz-tab" data-viz="distribution">התפלגות בספרי התנ"ך</button>
+            </div>
+            <div id="vizHint" class="viz-hint">לחץ על בניין לסינון או על מילה למעבר אליה</div>
+          </div>
+
+          <div id="constellationWrap" class="viz-panel">
+            <div class="svg-toolbar">
+              <button id="zoomInBtn" class="mini-btn" title="הגדל">+</button>
+              <button id="zoomOutBtn" class="mini-btn" title="הקטן">−</button>
+              <button id="zoomResetBtn" class="mini-btn" title="אפס תצוגה">איפוס</button>
+              <span id="constellationLegend" class="legend-inline"></span>
+            </div>
+            <div class="svg-viewport">
+              <svg id="constellationSvg" viewBox="0 0 920 560" preserveAspectRatio="xMidYMid meet"></svg>
+            </div>
+          </div>
+
+          <div id="collocationsWrap" class="viz-panel hidden">
+            <div class="svg-viewport">
+              <svg id="collocationsSvg" viewBox="0 0 920 500" preserveAspectRatio="xMidYMid meet"></svg>
+            </div>
+          </div>
+
+          <div id="distributionWrap" class="viz-panel hidden">
+            <div id="distributionChart" class="dist-chart"></div>
+          </div>
+        </article>
+
+        <!-- Vocalized & Cantillated Verse Reader -->
+        <article id="verseSection" class="card verses-card">
+          <div class="verses-header">
+            <div class="verses-title-row">
+              <h3>מקורות ופסוקים מלאים</h3>
+              <span id="versesSummary" class="verses-summary"></span>
+            </div>
+            <div id="activeFiltersBar" class="active-filters hidden"></div>
+          </div>
+          <div id="versesList" class="verses-list"></div>
+          <div id="versesMoreWrap" class="load-more-wrap hidden">
+            <button id="loadMoreVersesBtn" class="secondary-btn">טען פסוקים נוספים</button>
+          </div>
+        </article>
+      </div>
+
+      <!-- Free Verse Phrase Search Mode -->
+      <div id="verseSearchView" class="hidden">
+        <article class="card verses-card">
+          <div class="verses-header">
+            <div class="verses-title-row">
+              <h3>חיפוש חופשי בפסוקי התנ"ך</h3>
+              <span id="phraseSummary" class="verses-summary"></span>
+            </div>
+          </div>
+          <div id="phraseEmptyHint" class="empty-state">
+            הקלד מילה או ביטוי בתיבת החיפוש למעלה (למשל: <strong>תהו ובהו</strong>, <strong>על פני תהום</strong>, <strong>ואהבת לרעך</strong>) כדי לאתר את כל הפסוקים התואמים.
+          </div>
+          <div id="phraseVersesList" class="verses-list"></div>
+          <div id="phraseMoreWrap" class="load-more-wrap hidden">
+            <button id="loadMorePhraseBtn" class="secondary-btn">טען פסוקים נוספים</button>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <!-- Floating Interactive Word Tooltip -->
+  <div id="wordTooltip" class="word-tooltip hidden" role="tooltip"></div>
+
+  <!-- Slide-Over Chapter Reader Drawer -->
+  <div id="drawerBackdrop" class="drawer-backdrop hidden"></div>
+  <aside id="chapterDrawer" class="chapter-drawer hidden" aria-label="קורא פרק מלא">
+    <div class="drawer-header">
+      <div>
+        <span class="drawer-kicker">קריאה ברצף הפרק</span>
+        <h3 id="drawerTitle" class="he-serif">—</h3>
+      </div>
+      <div class="drawer-nav">
+        <button id="prevChapBtn" class="mini-btn">פרק קודם</button>
+        <button id="nextChapBtn" class="mini-btn">פרק הבא</button>
+        <button id="closeDrawerBtn" class="mini-btn close-x" title="סגור">✕</button>
+      </div>
+    </div>
+    <div id="drawerBody" class="drawer-body"></div>
+  </aside>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
